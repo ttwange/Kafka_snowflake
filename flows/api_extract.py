@@ -16,3 +16,7 @@ else:
     print("No data fetched.")
 
 print(df.isna().sum())
+
+def transformation(df: int) -> int:
+    df.drop(columns=["aFRR_ActivatedDK1"])
+    return df
