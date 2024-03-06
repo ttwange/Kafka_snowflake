@@ -4,7 +4,6 @@ from airflow.operators.python import PythonOperator
 from sqlalchemy import create_engine
 
 # Step 4: Set up PostgreSQL Connection
-
 POSTGRES_CONN_STR=postgresql://username:password@host:port/database
 
 
