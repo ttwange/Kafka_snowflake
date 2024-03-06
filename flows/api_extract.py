@@ -18,5 +18,5 @@ else:
 print(df.isna().sum())
 
 def transformation(df: int) -> int:
-    df.drop(columns=["aFRR_ActivatedDK1"])
+    df.drop(columns=["aFRR_ActivatedDK1","aFRR_ActivatedDK2"])
     return df
