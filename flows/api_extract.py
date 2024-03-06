@@ -7,16 +7,14 @@ def fetch_data():
     return data['records']
 
 # Call the function to fetch data
-json_data = fetch_data()
-if json_data:
-    # Convert JSON data to DataFrame
+
+def transformation(json_data):
     df = pd.DataFrame(json_data)
-    #print(df.head())  # Display the first few rows of the DataFrame
-else:
-    print("No data fetched.")
-
-print(df.isna().sum())
-
-def transformation(df: int) -> int:
-    df.drop(columns=["aFRR_ActivatedDK1","aFRR_ActivatedDK2","mFRR_ActivatedDK1","mFRR_ActivatedDK2"])
+    df = df.drop(columns=["aFRR_ActivatedDK1","aFRR_ActivatedDK2","mFRR_ActivatedDK1","mFRR_ActivatedDK2","ImbalanceDK1","ImbalanceDK2"])
     return df
+
+json_data = fetch_data()
+clean_data = transformation(json_data)
+
+print(clean_data.head())
+
