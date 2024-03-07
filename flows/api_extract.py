@@ -34,7 +34,6 @@ def load(clean_data):
     conn = psycopg2.connect(postgres_connection_string)
     cursor = conn.cursor()
 
-    # Insert dataframe into PostgreSQL table
     clean_data_columns = clean_data.columns.tolist()
     for _, row in clean_data.iterrows():
         cursor.execute(
@@ -42,7 +41,6 @@ def load(clean_data):
             tuple(row)
         )
 
-    # Commit the transaction
     conn.commit()
     print("Data loaded successfully.")
 
