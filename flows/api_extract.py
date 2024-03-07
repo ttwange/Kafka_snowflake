@@ -1,16 +1,12 @@
-import requests
-import pandas as pd
-from sqlalchemy import create_engine
-from dotenv import load_dotenv
 import os
 import psycopg2
-from sqlalchemy import create_engine
+import requests
+import pandas as pd
+from dotenv import load_dotenv
 
-
-# Load environment variables from .env file
 load_dotenv()
 
-# Get PostgreSQL connection parameters from environment variables
+# PostgreSQL connection parameters from environment variables
 postgres_user = os.getenv("POSTGRES_USER")
 postgres_password = os.getenv("POSTGRES_PASSWORD")
 postgres_db = os.getenv("POSTGRES_DB")
