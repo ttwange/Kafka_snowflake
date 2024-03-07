@@ -3,7 +3,7 @@ import psycopg2
 import requests
 import pandas as pd
 from dotenv import load_dotenv
-from prefect import flow,task
+from prefect import flow, task
 
 load_dotenv()
 
@@ -35,7 +35,6 @@ def load(clean_data,postgres_user,postgres_password,postgres_host,postgres_port,
 
     conn.commit()
     print("Data loaded successfully.")
-
 
 @flow(name="Energy ingest")
 def main_flow():
