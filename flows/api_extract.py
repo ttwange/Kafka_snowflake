@@ -49,6 +49,7 @@ def main_flow():
     clean_data = transformation(json_data)
     load(clean_data,postgres_user,postgres_password,postgres_host,postgres_port,postgres_db)
 
-
+if __name__ == "__main__":
+    main_flow()
 
 
