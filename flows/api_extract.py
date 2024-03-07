@@ -7,19 +7,19 @@ from prefect import flow, task
 
 load_dotenv()
 
-@task(log_prints=True,retires=3)
+@task(log_prints=True, retries=3)
 def fetch_data():
     url = "https://api.energidataservice.dk/dataset/PowerSystemRightNow/"
     data = requests.get(url).json()
     return data['records']
 
-@task(log_prints=True,retires=3)
+@task(log_prints=True,retries=3)
 def transformation(json_data):
     df = pd.DataFrame(json_data)
     df = df.drop(columns=["aFRR_ActivatedDK1","aFRR_ActivatedDK2","mFRR_ActivatedDK1","mFRR_ActivatedDK2","ImbalanceDK1","ImbalanceDK2"])
     return df
 
-@task(log_prints=True,retires=3)
+@task(log_prints=True,retries=3)
 def load(clean_data,postgres_user,postgres_password,postgres_host,postgres_port,postgres_db):
     postgres_connection_string = f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
 
@@ -37,7 +37,7 @@ def load(clean_data,postgres_user,postgres_password,postgres_host,postgres_port,
     print("Data loaded successfully.")
 
 @flow(name="Energy ingest")
-def main_flow():
+def main():
     postgres_user = os.getenv("POSTGRES_USER")
     postgres_password = os.getenv("POSTGRES_PASSWORD")
     postgres_db = os.getenv("POSTGRES_DB")
@@ -49,6 +49,6 @@ def main_flow():
     load(clean_data,postgres_user,postgres_password,postgres_host,postgres_port,postgres_db)
 
 if __name__ == "__main__":
-    main_flow()
+    main()
 
 
