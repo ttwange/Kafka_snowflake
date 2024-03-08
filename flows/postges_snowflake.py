@@ -29,6 +29,16 @@ postgres_cursor.execute(f"SELECT * FROM {postgres_table}")
 data = postgres_cursor.fetchall()
 
 
+# snowflake insert statement
+snowflake_insert_sql = f"INSERT INTO emission ('Minutes1UTC', 
+        'Minutes1DK', 'CO2Emission', 'ProductionGe100MW',
+       'ProductionLt100MW', 'SolarPower', 'OffshoreWindPower',
+       'OnshoreWindPower', 'Exchange_Sum', 'Exchange_DK1_DE',
+       'Exchange_DK1_NL', 'Exchange_DK1_GB', 'Exchange_DK1_NO',
+       'Exchange_DK1_SE', 'Exchange_DK1_DK2', 'Exchange_DK2_DE',
+       'Exchange_DK2_SE', 'Exchange_Bornholm_SE' ) Values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+
+
 # Create a cursor from the connection
 cursor = snowflake_conn.cursor(DictCursor)
 
