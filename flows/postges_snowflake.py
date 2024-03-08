@@ -42,15 +42,14 @@ def fetch_data_from_postgres(engine):
         cursor = engine.cursor()
         cursor.execute(f"SELECT * FROM {os.getenv('POSTGRES_TABLE')}")
         data = cursor.fetchall()
-        cursor.close()
+        # cursor.close()
         return data
     except Exception as e:
         print("Error fetching data from PostgresQL {e}")
 
 @task
-def insert_data_to_snowflake(conn, data):
+def insert_data_to_snowflake(con, data):
     try:
-        # Snowflake insert statement
         snowflake_insert_sql = """
             INSERT INTO emission (
             Minutes1UTC, Minutes1DK, CO2Emission, ProductionGe100MW,
@@ -63,12 +62,12 @@ def insert_data_to_snowflake(conn, data):
         """
 
         # Create a cursor from the Snowflake connection
-        cursor = conn.cursor()
+        cursor = con.cursor()
         cursor.executemany(snowflake_insert_sql, data)
         cursor.close()
-        conn.commit()
+        con.commit()
     except Exception as e:
-        print("Error inserting data to Snowflake {e}")
+        print(f"Error inserting data to Snowflake {e}")
 
 @flow(name="ETL snowflake")
 def main():
