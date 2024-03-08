@@ -22,7 +22,6 @@ try:
     cursor.execute("SELECT current_version()")
     # Fetch the result
     result = cursor.fetchone()
-    print("Snowflake version: ", result["current_version()"])
     print("Connection is working!")
 except Exception as e:
     print( e)
