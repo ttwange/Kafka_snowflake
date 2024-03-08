@@ -25,7 +25,7 @@ try:
     print("Snowflake version: ", result["current_version()"])
     print("Connection is working!")
 except Exception as e:
-    print("Failed to connect to Snowflake: ", e)
+    print( e)
 
 # Close the cursor and connection
 cursor.close()
