@@ -13,6 +13,15 @@ snowflake_conn = snowflake.connector.connect(
     database=os.getenv("snowflake_database"),
     schema=os.getenv("snowflake_schema")
 )
+# connection to postgres
+postgres_user = os.getenv("POSTGRES_USER")
+postgres_password = os.getenv("POSTGRES_PASSWORD")
+postgres_db = os.getenv("POSTGRES_DB")
+postgres_host = os.getenv("POSTGRES_HOST")
+postgres_port = os.getenv("postgres_PORT")
+
+postgres_connection_string = f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
+
 
 # Create a cursor from the connection
 cursor = snowflake_conn.cursor(DictCursor)
