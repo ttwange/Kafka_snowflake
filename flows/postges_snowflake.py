@@ -60,7 +60,7 @@ def insert_data_to_snowflake(conn, data):
             Exchange_DK1_SE, Exchange_DK1_DK2, Exchange_DK2_DE,
             Exchange_DK2_SE, Exchange_Bornholm_SE
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """
+        """
 
         # Create a cursor from the Snowflake connection
         cursor = conn.cursor()
@@ -68,7 +68,7 @@ def insert_data_to_snowflake(conn, data):
         cursor.close()
         conn.commit()
     except Exception as e:
-        raise RuntimeError("Error inserting data to Snowflake") from e
+        print("Error inserting data to Snowflake {e}")
 
 @flow(name="ETL snowflake")
 def main():
