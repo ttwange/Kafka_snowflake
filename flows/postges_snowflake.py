@@ -21,3 +21,18 @@ def connect_to_snowflake():
         return conn
     except Exception as e:
         raise RuntimeError("Error connecting to snowflake") from e
+
+@task
+def connect_to_postgres():
+    try:
+        conn = psycopg2.connect(
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            host=os.getenv("POSTGRES_HOST"),
+            port=os.getenv("POSTGRES_PORT"),
+            database=os.getenv("POSTGRES_DB")
+        )
+        return conn
+    except Exception as e:
+        raise RuntimeError("Error connecting to PostgreSQL") from e
+    
