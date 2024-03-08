@@ -31,17 +31,18 @@ try:
     postgres_cursor.execute(f"SELECT * FROM {os.getenv('POSTGRES_TABLE')}")
     data = postgres_cursor.fetchall()
 
-    # Snowflake insert statement
+   # Snowflake insert statement
     snowflake_insert_sql = """
         INSERT INTO emission (
-            'Minutes1UTC', 'Minutes1DK', 'CO2Emission', 'ProductionGe100MW',
-            'ProductionLt100MW', 'SolarPower', 'OffshoreWindPower',
-            'OnshoreWindPower', 'Exchange_Sum', 'Exchange_DK1_DE',
-            'Exchange_DK1_NL', 'Exchange_DK1_GB', 'Exchange_DK1_NO',
-            'Exchange_DK1_SE', 'Exchange_DK1_DK2', 'Exchange_DK2_DE',
-            'Exchange_DK2_SE', 'Exchange_Bornholm_SE'
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            Minutes1UTC, Minutes1DK, CO2Emission, ProductionGe100MW,
+            ProductionLt100MW, SolarPower, OffshoreWindPower,
+            OnshoreWindPower, Exchange_Sum, Exchange_DK1_DE,
+            Exchange_DK1_NL, Exchange_DK1_GB, Exchange_DK1_NO,
+            Exchange_DK1_SE, Exchange_DK1_DK2, Exchange_DK2_DE,
+            Exchange_DK2_SE, Exchange_Bornholm_SE
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
+
 
     # Create a cursor from the Snowflake connection
     snowflake_cursor = snowflake_conn.cursor()
