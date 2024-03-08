@@ -46,4 +46,26 @@ def fetch_data_from_postgres(engine):
         return data
     except Exception as e:
         raise RuntimeError("Error fetching data from PostgresQL") from e
-    
+
+@task
+def insert_data_to_snowflake(conn, data):
+    try:
+        # Snowflake insert statement
+        snowflake_insert_sql = """
+            INSERT INTO emission (
+                Minutes1UTC, Minutes1DK, CO2Emission, ProductionGe100MW,
+                ProductionLt100MW, SolarPower, OffshoreWindPower,
+                OnshoreWindPower, Exchange_Sum, Exchange_DK1_DE,
+                Exchange_DK1_NL, Exchange_DK1_GB, Exchange_DK1_NO,
+                Exchange_DK1_SE, Exchange_DK1_DK2, Exchange_DK2_DE,
+                Exchange_DK2_SE, Exchange_Bornholm_SE
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+        # Create a cursor from the Snowflake connection
+        cursor = conn.cursor()
+        cursor.executemany(snowflake_insert_sql, data)
+        cursor.close()
+        conn.commit()
+    except Exception as e:
+        raise RuntimeError("Error inserting data to Snowflake") from e
