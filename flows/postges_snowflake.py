@@ -25,14 +25,25 @@ def connect_to_snowflake():
 @task
 def connect_to_postgres():
     try:
-        conn = psycopg2.connect(
+        engine = psycopg2.connect(
             user=os.getenv("POSTGRES_USER"),
             password=os.getenv("POSTGRES_PASSWORD"),
             host=os.getenv("POSTGRES_HOST"),
             port=os.getenv("POSTGRES_PORT"),
             database=os.getenv("POSTGRES_DB")
         )
-        return conn
+        return engine
     except Exception as e:
         raise RuntimeError("Error connecting to PostgreSQL") from e
+    
+@task
+def fetch_data_from_postgres(engine):
+    try:
+        cursor = engine.cursor()
+        cursor.execute(f"SELECT * FROM {os.getenv('POSTGRES_TABLE')}")
+        data = cursor.fetchall()
+        cursor.close()
+        return data
+    except Exception as e:
+        raise RuntimeError("Error fetching data from PostgresQL") from e
     
