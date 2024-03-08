@@ -19,8 +19,14 @@ postgres_password = os.getenv("POSTGRES_PASSWORD")
 postgres_db = os.getenv("POSTGRES_DB")
 postgres_host = os.getenv("POSTGRES_HOST")
 postgres_port = os.getenv("postgres_PORT")
+postgres_table = os.getenv("postgres_TABLE")
 
-postgres_connection_string = f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
+postgres_conn = f"postgresql://{postgres_user}:{postgres_password}@{postgres_host}:{postgres_port}/{postgres_db}"
+
+# Fetch data from PostgreSQL
+postgres_cursor = postgres_conn.cursor()
+postgres_cursor.execute(f"SELECT * FROM {postgres_table}")
+data = postgres_cursor.fetchall()
 
 
 # Create a cursor from the connection
