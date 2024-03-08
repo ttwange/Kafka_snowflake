@@ -69,3 +69,10 @@ def insert_data_to_snowflake(conn, data):
         conn.commit()
     except Exception as e:
         raise RuntimeError("Error inserting data to Snowflake") from e
+
+@flow(name="ETL snowflake")
+def main():
+    snowflake_conn = connect_to_snowflake()
+    postgres_conn = connect_to_postgres()
+    data = fetch_data_from_postgres(postgres_conn)
+    insert_data_to_snowflake(snowflake_conn, data)

@@ -37,7 +37,7 @@ def load(clean_data,postgres_user,postgres_password,postgres_host,postgres_port,
     conn.commit()
     print("Data loaded successfully.")
 
-@flow(name="Energy ingest")
+@flow(name="Energy API ingest")
 def main():
     postgres_user = os.getenv("POSTGRES_USER")
     postgres_password = os.getenv("POSTGRES_PASSWORD")
