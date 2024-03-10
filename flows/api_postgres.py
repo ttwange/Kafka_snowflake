@@ -17,7 +17,6 @@ def fetch_data():
 def transformation(json_data):
     df = pd.DataFrame(json_data)
     df = df.drop(columns=["aFRR_ActivatedDK1","aFRR_ActivatedDK2","mFRR_ActivatedDK1","mFRR_ActivatedDK2","ImbalanceDK1","ImbalanceDK2"])
-    print(df.columns)
     return df
 
 @task(log_prints=True,retries=3)
