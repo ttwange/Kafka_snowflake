@@ -69,7 +69,7 @@ services:
       retries: 5
 
   debezium:
-    image: debezium/connect:2.5
+    image: debezium/connect:2.6
     environment:
       BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       GROUP_ID: ${DE_GROUP_ID}
