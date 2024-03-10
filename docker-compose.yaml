@@ -17,3 +17,46 @@ services:
     ports:
       - '5050:80'
     restart: always
+
+zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+kafka:
+  image: confluentinc/cp-enterprise-kafka:7.5.3
+  depends_on: [zookeeper]
+  environment:
+    KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+    KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+    KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+    KAFKA_JMX_PORT: ${KAFKA_JMX_PORT}
+  ports:
+    - 9092:9092
+
+debezium:
+  image: debezium/connect:1.4
+  environment:
+    BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
+    GROUP_ID: ${GROUP_ID}
+    CONFIG_STORAGE_TOPIC: ${CONFIG_STORAGE_TOPIC}
+    OFFSET_STORAGE_TOPIC: ${OFFSET_STORAGE_TOPIC}
+    KEY_CONVERTER: ${KEY_CONVERTER}
+    VALUE_CONVERTER: ${VALUE_CONVERTER}
+    CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: ${CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL}
+    CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: ${CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL}
+  depends_on: [kafka]
+  ports:
+    - 8083:8083
+
+schema-registry:
+  image: confluentinc/cp-schema-registry:7.5.3
+  environment:
+    - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=${SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL}
+    - SCHEMA_REGISTRY_HOST_NAME=${SCHEMA_REGISTRY_HOST_NAME}
+    - SCHEMA_REGISTRY_LISTENERS=${SCHEMA_REGISTRY_LISTENERS}
+  ports:
+    - 8081:8081
+  depends_on: [zookeeper, kafka]
+      
