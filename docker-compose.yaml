@@ -83,6 +83,11 @@ services:
       - broker
     ports:
       - "8083:8083"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8083/connectors" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.5.3
@@ -131,7 +136,7 @@ services:
   consumer1:
     image: confluentinc/cp-enterprise-kafka:7.5.3
     container_name: snowflake-consumer
-    command: ["kafka-console-consumer", "--bootstrap-server=broker:29092", "--topic=asset", "--from-beginning"]
+    command: ["kafka-console-consumer", "--bootstrap-server=broker:9092", "--topic=asset", "--from-beginning"]
     depends_on:
       - broker
     environment:
