@@ -104,15 +104,15 @@ services:
       energy:
 
   postgres:
-    image: postgres:13
+    image: debezium/postgres:13
     container_name: postgres
     hostname: postgres
     ports:
-      - '5432:5432'
+      - 5431:5432
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: financial_db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     command: [ 'postgres', '-c', 'wal_level=logical' ]
     healthcheck:
       test: [ 'CMD', 'psql', '-U', 'postgres', '-c', 'SELECT 1' ]
@@ -121,8 +121,17 @@ services:
       retries: 5
     networks:
       energy:
+  
+  pgadmin:
+    image: dpage/pgadmin4:7.6
+    environment: 
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - '5050:80'
+    restart: always
 
 networks:
-  code-with-yu:
+  energy:
     name: energy
     driver: bridge
