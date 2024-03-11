@@ -1,0 +1,143 @@
+version: "3.7"
+services:
+  postgres:
+    image: debezium/postgres:13
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - 5431:5432
+
+  pgadmin:
+    image: dpage/pgadmin4:7.6
+    environment: 
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - '5050:80'
+    restart: always
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    hostname: cdc_zookeeper
+    container_name: cdc_zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
+    healthcheck:
+      test: ['CMD', 'bash', '-c', "echo 'ruok' | nc localhost ${ZOOKEEPER_CLIENT_PORT}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5 
+
+  broker:
+    image: confluentinc/cp-enterprise-kafka:7.5.3
+    hostname: cdc-broker
+    container_name: cdc-broker
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_METRIC_REPORTERS: ${KAFKA_METRIC_REPORTERS}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: ${KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS}
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: ${KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR}
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: ${KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR}
+      KAFKA_JMX_PORT: ${KAFKA_JMX_PORT}
+      KAFKA_JMX_HOSTNAME: ${KAFKA_JMX_HOSTNAME}
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: ${KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL}
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: ${CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS}
+      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: ${CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS}
+      CONFLUENT_METRICS_ENABLE: ${CONFLUENT_METRICS_ENABLE}
+      CONFLUENT_SUPPORT_CUSTOMER_ID: ${CONFLUENT_SUPPORT_CUSTOMER_ID}
+    healthcheck:
+      test: [ "CMD", "bash", "-c", 'nc -z localhost 9092' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  debezium:
+    image: debezium/connect:1.4
+    environment:
+      BOOTSTRAP_SERVERS: broker:9101
+      GROUP_ID: ${DE_GROUP_ID}
+      CONFIG_STORAGE_TOPIC: connect_configs
+      OFFSET_STORAGE_TOPIC: connect_offsets
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      - broker
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8083/connectors" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.3
+    hostname: cdc-schema-registry
+    container_name: cdc-schema-registry
+    depends_on:
+      broker:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: ${SCHEMA_REGISTRY_HOST_NAME}
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: ${SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS}
+      SCHEMA_REGISTRY_LISTENERS: ${SCHEMA_REGISTRY_LISTENERS}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:7.5.3
+    hostname: cdc-control-center
+    container_name: cdc-control-center
+    depends_on:
+      broker:
+        condition: service_healthy
+      schema-registry:
+        condition: service_healthy
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: ${CONTROL_CENTER_BOOTSTRAP_SERVERS}
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: ${CONTROL_CENTER_SCHEMA_REGISTRY_URL}
+      CONTROL_CENTER_REPLICATION_FACTOR: ${CONTROL_CENTER_REPLICATION_FACTOR}
+      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: ${CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS}
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: ${CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS}
+      CONFLUENT_METRICS_ENABLE: ${CONFLUENT_METRICS_ENABLE}
+      PORT: ${PORT}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9021/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  consumer1:
+    image: confluentinc/cp-enterprise-kafka:7.5.3
+    container_name: snowflake-consumer
+    command: ["kafka-console-consumer", "--bootstrap-server=broker:9092", "--topic=asset", "--from-beginning"]
+    depends_on:
+      - broker
+    environment:
+      GROUP_ID: ${SF_GROUP_ID}
