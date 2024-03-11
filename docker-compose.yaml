@@ -69,7 +69,7 @@ services:
       retries: 5
 
   debezium:
-    image: debezium/connect:2.6
+    image: debezium/connect:
     environment:
       BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
       GROUP_ID: ${DE_GROUP_ID}
@@ -83,7 +83,6 @@ services:
       - ./debezium.json:/etc/debezium/debezium.json
     depends_on:
       - broker
-    command: debezium-connector-start /etc/debezium/debezium.json
     ports:
       - "8083:8083"
     healthcheck:
