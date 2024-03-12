@@ -4,8 +4,8 @@ import snowflake.connector
 from dotenv import load_dotenv
 from prefect import flow, task
 
-#load enviroment variables 
-load_dotenv
+# Load environment variables 
+load_dotenv()
 
 @task
 def connect_to_snowflake():
@@ -20,7 +20,7 @@ def connect_to_snowflake():
         )
         return conn
     except Exception as e:
-        print(f"Error connecting to snowflake {e}")
+        print(f"Error connecting to Snowflake: {e}")
 
 @task
 def connect_to_postgres():
@@ -34,7 +34,7 @@ def connect_to_postgres():
         )
         return engine
     except Exception as e:
-        print("Error connecting to PostgreSQL {e}")
+        print(f"Error connecting to PostgreSQL: {e}")
     
 @task
 def fetch_data_from_postgres(engine):
@@ -42,10 +42,10 @@ def fetch_data_from_postgres(engine):
         cursor = engine.cursor()
         cursor.execute(f"SELECT * FROM {os.getenv('POSTGRES_TABLE')}")
         data = cursor.fetchall()
-        # cursor.close()
+        cursor.close()
         return data
     except Exception as e:
-        print("Error fetching data from PostgresQL {e}")
+        print(f"Error fetching data from PostgreSQL: {e}")
 
 @task
 def insert_data_to_snowflake(con, data):
@@ -67,7 +67,7 @@ def insert_data_to_snowflake(con, data):
         cursor.close()
         con.commit()
     except Exception as e:
-        print(f"Error inserting data to Snowflake {e}")
+        print(f"Error inserting data to Snowflake: {e}")
 
 @flow(name="ETL snowflake")
 def main():
