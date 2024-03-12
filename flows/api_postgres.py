@@ -17,7 +17,7 @@ def fetch_data():
 def transformation(json_data):
     df = pd.DataFrame(json_data)
     df = df.drop(columns=["aFRR_ActivatedDK1","aFRR_ActivatedDK2","mFRR_ActivatedDK1","mFRR_ActivatedDK2","ImbalanceDK1","ImbalanceDK2"])
-    print(df.columns)
+    print(df.head())
     return df
 
 @task(log_prints=True,retries=3)
@@ -29,10 +29,20 @@ def load(clean_data,postgres_user,postgres_password,postgres_host,postgres_port,
 
     clean_data_columns = clean_data.columns.tolist()
     for _, row in clean_data.iterrows():
-        cursor.execute(
-            f"INSERT INTO emission ({','.join(clean_data_columns)}) VALUES ({','.join(['%s']*len(clean_data_columns))})",
-            tuple(row)
-        )
+        placeholders = ', '.join(['%s'] * len(clean_data_columns))
+        columns = ', '.join(clean_data_columns)
+        conflict_columns = ', '.join([f'{col} = EXCLUDED.{col}' for col in clean_data_columns])
+        
+        # Construct the SQL query with ON CONFLICT clause
+        sql_query = f"""
+            INSERT INTO emission ({columns}) 
+            VALUES ({placeholders})
+            ON CONFLICT (Minutes1UTC) DO UPDATE
+            SET {conflict_columns}
+        """
+        
+        # Execute the SQL query
+        cursor.execute(sql_query, tuple(row))
 
     conn.commit()
     print("Data loaded successfully.")
