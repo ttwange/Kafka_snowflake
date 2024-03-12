@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from prefect import flow, task
 
 load_dotenv()
-
+  
 @task(log_prints=True, retries=3)
 def fetch_data():
     url = "https://api.energidataservice.dk/dataset/PowerSystemRightNow/"
