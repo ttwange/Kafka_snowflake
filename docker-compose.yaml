@@ -153,7 +153,7 @@ services:
         CONTROL_CENTER_REPLICATION_FACTOR: 1
         CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
         CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-        CONFLUENT_METRICS_ENABLE: "false"
+        CONFLIENT_METRICS_ENABLE: "false"
         PORT: 9021
       healthcheck:
         test: [ "CMD", "curl", "-f", "http://localhost:9021/health" ]
