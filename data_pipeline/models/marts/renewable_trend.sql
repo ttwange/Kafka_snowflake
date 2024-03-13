@@ -7,5 +7,5 @@ select
     f.OffshoreWindPower,
     f.OnshoreWindPower
 from  {{ ref('time_dimension') }} as t
-join {{ ref('energy_fact') }} as e
-on e.time_id=t.time_id
+join {{ ref('energy_fact') }} as f
+on f.time_id=t.time_id
