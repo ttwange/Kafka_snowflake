@@ -16,4 +16,4 @@ select
     Exchange_DK2_DE,
     Exchange_DK2_SE,
     Exchange_Bornholm_SE
-from {{ ref('stg_energy')}};
+from {{ ref('stg_energy') }}
