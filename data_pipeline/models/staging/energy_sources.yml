@@ -7,7 +7,7 @@ sources:
     table: 
       - name: emission
         columns:
-          - names: MINUTES1UTC
+          - name: MINUTES1UTC
             tests:
               - unique
               - not null
