@@ -177,3 +177,7 @@ pyrightconfig.json
 
 #debezium config
 debezium.json
+
+
+#dbt project file
+data_pipeline/dbt_project.yml
