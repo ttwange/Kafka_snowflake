@@ -1,0 +1,13 @@
+version: 2
+
+sources:
+  - name: emisson
+    database: TEST_DATABASE
+    schema: TEST_SCHEMA
+    table: 
+      - name: emission
+        columns:
+          - names: MINUTES1UTC
+            tests:
+              - unique
+              - not null
