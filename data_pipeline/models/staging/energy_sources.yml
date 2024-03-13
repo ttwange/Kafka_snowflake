@@ -1,10 +1,10 @@
 version: 2
 
 sources:
-  - name: emisson
+  - name: energy
     database: TEST_DATABASE
     schema: TEST_SCHEMA
-    table: 
+    tables: 
       - name: emission
         columns:
           - name: MINUTES1UTC
