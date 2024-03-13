@@ -4,5 +4,6 @@ select
     t.day,
     t.hour,
     f.CO2Emission
-from {{ ref('dimensions.time_dimension') }} as t
-join {{ ref('facts.energy_fact') }} as f on f.time_id = t.time_id;
+from  {{ ref('time_dimension') }} as t
+join {{ ref('energy_fact') }} as e
+on e.time_id=t.time_id

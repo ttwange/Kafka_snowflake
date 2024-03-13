@@ -13,5 +13,6 @@ select
     f.Exchange_DK2_DE,
     f.Exchange_DK2_SE,
     f.Exchange_Bornholm_SE
-from {{ ref('dimensions.time_dimension') }} as t
-join {{ ref('facts.energy_fact') }} as f on f.time_id = t.time_id
+from  {{ ref('time_dimension') }} as t
+join {{ ref('energy_fact') }} as e
+on e.time_id=t.time_id
