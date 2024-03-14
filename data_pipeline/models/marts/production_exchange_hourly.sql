@@ -2,7 +2,7 @@ select
     t.year,
     t.month,
     t.day,
-    t.hour
+    t.hour,
     SUM(e.Productionge100mw)  AS ge100_production,  --
     SUM(e.Productionlt100mw) AS  lt100_production,   --
     SUM(e.SolarPower) as SolarPower,
