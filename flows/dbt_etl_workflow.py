@@ -1,17 +1,21 @@
-from prefect import task, flow
-from dbt.cli.main import dbtRunner
+from pathlib import Path
+from prefect.task_runners import SequentialTaskRunner
+from prefect_dbt_flow import dbt_flow
+from prefect_dbt_flow.dbt import DbtProfile, DbtProject
 
-
-@task(log_prints=True,retries=3)
-def run_dbt():
-    dbt_runner = dbtRunner()
-    dbt_runner.run()
-
-@flow(name="dbt_workflow")
-def main():
-    dbt_task = run_dbt()
-    dbt_project_path = "./dbt_transformation"
-    return dbt_task
+my_dbt_flow = dbt_flow(
+    project=DbtProject(
+        name="dbt workflow",
+        project_dir=Path() / "./dbt_transformation",
+        profiles_dir=Path.home() / ".dbt",
+    ),
+    profile=DbtProfile(
+        target="dev",
+    ),
+    flow_kwargs={
+        "task_runner": SequentialTaskRunner(),
+    },
+)
 
 if __name__ == "__main__":
-    main()
+    my_dbt_flow()
