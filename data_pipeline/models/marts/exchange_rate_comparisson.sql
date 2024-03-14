@@ -1,5 +1,8 @@
 select
-    t.hour as hour,
+    t.year,
+    t.month,
+    t.day,
+    t.hour,
     SUM(e.exchange_dk1_de)  AS exchange_dk1_de,
     SUM(e.exchange_dk1_nl) AS  exchange_dk1_nl,
     SUM(e.exchange_dk1_gb) as exchange_dk1_gb,
@@ -8,4 +11,4 @@ select
 from  {{ ref('time_dimension') }} as t
 join {{ ref('energy_fact') }} as e
 on e.time_id=t.time_id
-group by t.hour
+group by t.year,t.month,t.day,t.hour
