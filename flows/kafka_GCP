@@ -2,11 +2,10 @@ import json
 from dotenv import load_dotenv
 from kafka import KafkaConsumer
 import pandas as pd
-import pyarrow.parquet  as pq
 from io import BytesIO
 from google.cloud import storage
 from prefect import Flow, task
-import os  # Importing os module for environment variables
+import os 
 
 load_dotenv()
 

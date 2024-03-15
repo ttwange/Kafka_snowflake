@@ -5,3 +5,4 @@ requests==2.31.0
 protobuf==4.21.11
 pyarrow==10.0.1
 prefect-dbt-flow
+google-cloud-storage
