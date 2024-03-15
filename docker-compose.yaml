@@ -5,9 +5,9 @@ services:
     container_name: postgres
     hostname: postgres
     environment:
-      - POSTGRES_USER=E_docker
-      - POSTGRES_PASSWORD=E_docker
-      - POSTGRES_DB=Energy
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - 5431:5432
     healthcheck:
@@ -16,18 +16,18 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      energy:
+      ${NETWORK_NAME}:
 
   pgadmin:
     image: dpage/pgadmin4:7.6
     environment: 
-      - PGADMIN_DEFAULT_EMAIL=pgadmin4@pgadmin.org
-      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - '5050:80'
     restart: always
     networks:
-      energy:
+      ${NETWORK_NAME}:
 
   zookeeper:
       image: confluentinc/cp-zookeeper:7.6.0
@@ -36,15 +36,15 @@ services:
       ports:
         - '2181:2181'
       environment:
-        ZOOKEEPER_CLIENT_PORT: 2181
-        ZOOKEEPER_TICK_TIME: 2000
+        ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+        ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
       healthcheck:
         test: ['CMD', 'bash', '-c', "echo 'ruok' | nc localhost 2181"]
         interval: 10s
         timeout: 5s
         retries: 5 
       networks:
-        energy:
+        ${NETWORK_NAME}:
 
   broker:
       image: confluentinc/cp-enterprise-kafka:7.5.3
@@ -58,10 +58,10 @@ services:
         - '9092:9092'
         - '9101:9101'
       environment:
-        KAFKA_BROKER_ID: 1
-        KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+        KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+        KAFKA_ZOOKEEPER_CONNECT: zookeeper:${KAFKA_ZOOKEEPER_CONNECT}
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+        KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
         KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
         KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -69,9 +69,9 @@ services:
         KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
         KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
         KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-        KAFKA_JMX_PORT: 9101
-        KAFKA_JMX_HOSTNAME: localhost
-        KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+        KAFKA_JMX_PORT: ${KAFKA_JMX_PORT}
+        KAFKA_JMX_HOSTNAME: ${KAFKA_JMX_HOSTNAME}
+        KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: ${KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL}
         CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
         CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
         CONFLUENT_METRICS_ENABLE: "false"
@@ -82,7 +82,7 @@ services:
         timeout: 5s
         retries: 5
       networks:
-        energy:
+        ${NETWORK_NAME}:
 
   debezium:
     image: debezium/connect:1.4
@@ -96,12 +96,12 @@ services:
     ports:
       - '8093:8083'
     environment:
-      BOOTSTRAP_SERVERS: broker:29092
-      CONNECT_REST_ADVERTISED_HOST_NAME: debezium
+      BOOTSTRAP_SERVERS: ${BOOTSTRAP_SERVERS}
+      CONNECT_REST_ADVERTISED_HOST_NAME: ${CONNECT_REST_ADVERTISED_HOST_NAME}
       GROUP_ID: 1
-      CONFIG_STORAGE_TOPIC: connect_configs
-      STATUS_STORAGE_TOPIC: connect_statuses
-      OFFSET_STORAGE_TOPIC: connect_offsets
+      CONFIG_STORAGE_TOPIC: ${CONFIG_STORAGE_TOPIC}
+      STATUS_STORAGE_TOPIC: ${STATUS_STORAGE_TOPIC}
+      OFFSET_STORAGE_TOPIC: $OFFSET_STORAGE_TOPIC}
       KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       ENABLE_DEBEZIUM_SCRIPTING: 'true'
@@ -113,7 +113,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      energy:
+      ${NETWORK_NAME}:
 
   schema-registry:
       image: confluentinc/cp-schema-registry:7.5.3
@@ -125,16 +125,16 @@ services:
       ports:
         - '8081:8081'
       environment:
-        SCHEMA_REGISTRY_HOST_NAME: schema-registry
-        SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: broker:29092
-        SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+        SCHEMA_REGISTRY_HOST_NAME: ${SCHEMA_REGISTRY_HOST_NAME}
+        SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: ${SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS}
+        SCHEMA_REGISTRY_LISTENERS: ${SCHEMA_REGISTRY_LISTENERS}
       healthcheck:
         test: ["CMD-SHELL", "curl -f http://localhost:8081/subjects"]
         interval: 30s
         timeout: 10s
         retries: 5
       networks:
-        energy:
+        ${NETWORK_NAME}:
 
   control-center:
       image: confluentinc/cp-enterprise-control-center:7.5.3
@@ -148,12 +148,12 @@ services:
       ports:
         - "9021:9021"
       environment:
-        CONTROL_CENTER_BOOTSTRAP_SERVERS: broker:29092
-        CONTROL_CENTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-        CONTROL_CENTER_REPLICATION_FACTOR: 1
-        CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 2
-        CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-        CONFLUENT_METRICS_TOPIC_REPLICATION: 1
+        CONTROL_CENTER_BOOTSTRAP_SERVERS: ${CONTROL_CENTER_BOOTSTRAP_SERVERS}
+        CONTROL_CENTER_SCHEMA_REGISTRY_URL: ${CONTROL_CENTER_SCHEMA_REGISTRY_URL}
+        CONTROL_CENTER_REPLICATION_FACTOR: ${CONTROL_CENTER_REPLICATION_FACTOR}
+        CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: ${CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS}
+        CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: ${CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS}
+        CONFLUENT_METRICS_TOPIC_REPLICATION: 2
         CONFLIENT_METRICS_ENABLE: "false"
         PORT: 9021
       healthcheck:
@@ -162,9 +162,9 @@ services:
         timeout: 10s
         retries: 5
       networks:
-        energy:
+       ${NETWORK_NAME}:
 
 networks:
   energy:
-    name: energy
+    name: ${NETWORK_NAME}
     driver: bridge
