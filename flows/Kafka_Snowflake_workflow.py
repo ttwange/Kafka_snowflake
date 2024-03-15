@@ -59,10 +59,11 @@ def insert_data_to_snowflake(con, data):
         print(f"Error inserting data to Snowflake: {e}")
 
 # Define the Prefect flow
-with Flow(name="ETL snowflake") as flow:
+@flow(name="Kafka_snowflake")
+def main():
     snowflake_conn = connect_to_snowflake()
     kafka_messages = consume_messages()
     insert_data_to_snowflake(snowflake_conn, kafka_messages)
 
-# Run the flow
-flow.run()
+if __name__ == "__main__":
+    main()
