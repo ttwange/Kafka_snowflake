@@ -2,7 +2,11 @@ import os
 import json
 import snowflake.connector
 from dotenv import load_dotenv
-from kafka import KafkaConsumer
+from kafka import  KafkaConsumer
+import pandas as pd
+import pyarrow.parquet as pq
+from io import BytesIO
+from google.cloud import storage
 from prefect import Flow, task
 
 # Load environment variables 
@@ -32,38 +36,39 @@ def consume_messages():
             group_id=os.getenv("KAFKA_GROUP_ID"),
             value_deserializer=lambda x: json.loads(x.decode('utf-8'))
         )
+        data = []
         for message in consumer:
-            yield message.value
+            data.append(message.value)
+        return data
     except Exception as e:
         print(f"Error consuming messages from Kafka: {e}")
 
 @task
-def insert_data_to_snowflake(con, data):
+def convert_to_parquet(data):
     try:
-        snowflake_insert_sql = """
-            INSERT INTO emission (
-            Minutes1UTC, Minutes1DK, CO2Emission, ProductionGe100MW,
-            ProductionLt100MW, SolarPower, OffshoreWindPower,
-            OnshoreWindPower, Exchange_Sum, Exchange_DK1_DE,
-            Exchange_DK1_NL, Exchange_DK1_GB, Exchange_DK1_NO,
-            Exchange_DK1_SE, Exchange_DK1_DK2, Exchange_DK2_DE,
-            Exchange_DK2_SE, Exchange_Bornholm_SE
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-
-        # Create a cursor from the Snowflake connection
-        cursor = con.cursor()
-        cursor.executemany(snowflake_insert_sql, data)
-        cursor.close()
-        con.commit()
+        df = pd.DataFrame(data)
+        buffer = BytesIO()
+        df.to_parquet(buffer)
+        buffer.seek(0)
+        return buffer
     except Exception as e:
-        print(f"Error inserting data to Snowflake: {e}")
+        print(f"Error converting to Parquet: {e}")
+
+@task
+def load_to_gcs(buffer):
+    try:
+        client = storage.Client()
+        bucket = client.get_bucket(os.getenv("GCS_BUCKET_NAME"))
+        blob = bucket.blob("data.parquet")
+        blob.upload_from_file(buffer, content_type="application/octet-stream")
+    except Exception as e:
+        print(f"Error loading to GCS: {e}")
 
 # Define the Prefect flow
-with Flow(name="ETL snowflake") as flow:
-    snowflake_conn = connect_to_snowflake()
+with Flow(name="ETL to Parquet and GCS") as flow:
     kafka_messages = consume_messages()
-    insert_data_to_snowflake(snowflake_conn, kafka_messages)
+    parquet_buffer = convert_to_parquet(kafka_messages)
+    load_to_gcs(parquet_buffer)
 
 # Run the flow
 flow.run()
