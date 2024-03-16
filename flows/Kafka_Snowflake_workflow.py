@@ -38,12 +38,22 @@ def snow_main():
             Exchange_DK1_NL, Exchange_DK1_GB, Exchange_DK1_NO,
             Exchange_DK1_SE, Exchange_DK1_DK2, Exchange_DK2_DE,
             Exchange_DK2_SE, Exchange_Bornholm_SE
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         for message in consumer:
             try:
-                cursor.execute(snowflake_insert_sql, message.value)
+                data = message.value
+                values = (
+                    data['Minutes1UTC'], data['Minutes1DK'], data['CO2Emission'],
+                    data['ProductionGe100MW'], data['ProductionLt100MW'],
+                    data['SolarPower'], data['OffshoreWindPower'], data['OnshoreWindPower'],
+                    data['Exchange_Sum'], data['Exchange_DK1_DE'], data['Exchange_DK1_NL'],
+                    data['Exchange_DK1_GB'], data['Exchange_DK1_NO'], data['Exchange_DK1_SE'],
+                    data['Exchange_DK1_DK2'], data['Exchange_DK2_DE'], data['Exchange_DK2_SE'],
+                    data['Exchange_Bornholm_SE']
+                )
+                cursor.execute(snowflake_insert_sql, values)
                 conn.commit()
                 print("Data inserted into Snowflake")
             except Exception as e:
@@ -51,8 +61,6 @@ def snow_main():
                 conn.rollback()
     except Exception as e:
         print(f"Error connecting to Snowflake: {e}")
-
-
 
 if __name__ == "__main__":
     snow_main()
