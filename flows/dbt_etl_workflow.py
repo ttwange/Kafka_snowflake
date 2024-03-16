@@ -3,7 +3,7 @@ from prefect.task_runners import SequentialTaskRunner
 from prefect_dbt_flow import dbt_flow
 from prefect_dbt_flow.dbt import DbtProfile, DbtProject
 
-my_dbt_flow = dbt_flow(
+dbt_flow = dbt_flow(
     project=DbtProject(
         name="dbt workflow",
         project_dir=Path() / "./dbt_transformation",
@@ -18,4 +18,4 @@ my_dbt_flow = dbt_flow(
 )
 
 if __name__ == "__main__":
-    my_dbt_flow()
+    dbt_flow()

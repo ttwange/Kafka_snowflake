@@ -60,10 +60,10 @@ def insert_data_to_snowflake(con, data):
 
 # Define the Prefect flow
 @flow(name="Kafka_snowflake")
-def main():
+def snow_main():
     snowflake_conn = connect_to_snowflake()
     kafka_messages = consume_messages()
     insert_data_to_snowflake(snowflake_conn, kafka_messages)
 
 if __name__ == "__main__":
-    main()
+    snow_main()
