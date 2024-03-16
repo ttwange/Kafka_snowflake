@@ -7,10 +7,9 @@ from prefect import flow, task
 
 load_dotenv()
 
-@flow(name="Kafka_Snowflake")
-def snow_main():
+@task
+def connect_to_snowflake():
     try:
-        # Connect to Snowflake
         conn = snowflake.connector.connect(
             user=os.getenv("snowflake_user"),
             password=os.getenv("snowflake_password"),
@@ -19,17 +18,29 @@ def snow_main():
             database=os.getenv("snowflake_database"),
             schema=os.getenv("snowflake_schema")
         )
-        cursor = conn.cursor()
+        return conn
+    except Exception as e:
+        print(f"Error connecting to Snowflake: {e}")
 
-        # Kafka Consumer Configuration
+@task
+def consume_messages_from_kafka():
+    try:
         consumer = KafkaConsumer(
             os.getenv("KAFKA_TOPIC"),
             bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
             group_id=os.getenv("KAFKA_GROUP_ID"),
             value_deserializer=lambda x: json.loads(x.decode('utf-8'))
         )
+        data = []
+        for message in consumer:
+            data.append(message.value)
+        return data
+    except Exception as e:
+        print(f"Error consuming messages from Kafka: {e}")
 
-        # Insert data into Snowflake
+@task
+def insert_data_to_snowflake(con, data):
+    try:
         snowflake_insert_sql = """
             INSERT INTO emission (
             Minutes1UTC, Minutes1DK, CO2Emission, ProductionGe100MW,
@@ -38,29 +49,23 @@ def snow_main():
             Exchange_DK1_NL, Exchange_DK1_GB, Exchange_DK1_NO,
             Exchange_DK1_SE, Exchange_DK1_DK2, Exchange_DK2_DE,
             Exchange_DK2_SE, Exchange_Bornholm_SE
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
 
-        for message in consumer:
-            try:
-                data = message.value
-                values = (
-                    data['Minutes1UTC'], data['Minutes1DK'], data['CO2Emission'],
-                    data['ProductionGe100MW'], data['ProductionLt100MW'],
-                    data['SolarPower'], data['OffshoreWindPower'], data['OnshoreWindPower'],
-                    data['Exchange_Sum'], data['Exchange_DK1_DE'], data['Exchange_DK1_NL'],
-                    data['Exchange_DK1_GB'], data['Exchange_DK1_NO'], data['Exchange_DK1_SE'],
-                    data['Exchange_DK1_DK2'], data['Exchange_DK2_DE'], data['Exchange_DK2_SE'],
-                    data['Exchange_Bornholm_SE']
-                )
-                cursor.execute(snowflake_insert_sql, values)
-                conn.commit()
-                print("Data inserted into Snowflake")
-            except Exception as e:
-                print(f"Error inserting data to Snowflake: {e}")
-                conn.rollback()
+        # Create a cursor from the Snowflake connection
+        cursor = con.cursor()
+        cursor.executemany(snowflake_insert_sql, data)
+        cursor.close()
+        con.commit()
     except Exception as e:
-        print(f"Error connecting to Snowflake: {e}")
+        print(f"Error inserting data to Snowflake: {e}")
 
+
+@flow(name="Kafka_Snowflake")
+def snow_main():
+    snowflake_conn = connect_to_snowflake()
+    kafka_data = consume_messages_from_kafka()
+    insert_data_to_snowflake(snowflake_conn, kafka_data)
+    
 if __name__ == "__main__":
     snow_main()
