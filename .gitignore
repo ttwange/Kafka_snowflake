@@ -177,3 +177,9 @@ pyrightconfig.json
 
 #debezium config
 debezium.json
+
+
+#deployment.yaml
+#dbt_flow-deployment.yaml
+energy_main-deployment.yaml
+snow_main-deployment.yaml

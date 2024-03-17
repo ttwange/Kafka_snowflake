@@ -23,7 +23,7 @@ def connect_to_snowflake():
         print(f"Error connecting to Snowflake: {e}")
 
 @task
-def consume_messages():
+def consume_messages_from_kafka():
     try:
         consumer = KafkaConsumer(
             os.getenv("KAFKA_TOPIC"),
@@ -31,8 +31,10 @@ def consume_messages():
             group_id=os.getenv("KAFKA_GROUP_ID"),
             value_deserializer=lambda x: json.loads(x.decode('utf-8'))
         )
+        data = []
         for message in consumer:
-            yield message.value
+            data.append(message.value)
+        return data
     except Exception as e:
         print(f"Error consuming messages from Kafka: {e}")
 
@@ -58,12 +60,12 @@ def insert_data_to_snowflake(con, data):
     except Exception as e:
         print(f"Error inserting data to Snowflake: {e}")
 
-# Define the Prefect flow
-@flow(name="Kafka_snowflake")
-def main():
-    snowflake_conn = connect_to_snowflake()
-    kafka_messages = consume_messages()
-    insert_data_to_snowflake(snowflake_conn, kafka_messages)
 
+@flow(name="Kafka_Snowflake")
+def snow_main():
+    snowflake_conn = connect_to_snowflake()
+    kafka_data = consume_messages_from_kafka()
+    insert_data_to_snowflake(snowflake_conn, kafka_data)
+    
 if __name__ == "__main__":
-    main()
+    snow_main()

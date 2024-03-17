@@ -4,7 +4,7 @@ from kafka import KafkaConsumer
 import pandas as pd
 from io import BytesIO
 from google.cloud import storage
-from prefect import Flow, task
+from prefect import flow, task
 import os 
 
 load_dotenv()
@@ -46,11 +46,12 @@ def load_to_gcs(buffer):
     except Exception as e:
         print(f"Error loading to GCS: {e}")
 
-# Define the Prefect flow
-with Flow(name="ETL to Parquet and GCS") as flow:
+
+@flow(name="kafka_GCS")
+def main():
     kafka_messages = consume_messages()
     parquet_buffer = convert_to_parquet(kafka_messages)
     load_to_gcs(parquet_buffer)
 
-# Run the flow
-flow.run()
+if __name__ == "__main__":
+    main()
