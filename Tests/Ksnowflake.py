@@ -1,10 +1,10 @@
 import os
 import json
+import logging
 import snowflake.connector
 from dotenv import load_dotenv
 from kafka import KafkaConsumer
 from prefect import flow, task
-import logging
 
 load_dotenv()
 
@@ -88,15 +88,12 @@ def main():
     snowflake_conn = connect_to_snowflake()
     for message in consumer:
         try:
-            # Process the Kafka message
             after_payload = extract_from_payload(message.value)
             insert_data_to_snowflake(snowflake_conn, after_payload)
 
-            # Commit the Kafka offset for this message
             consumer.commit()
 
         except Exception as e:
-
             logging.error(f"Error processing message: {e}")
 
 if __name__ == "__main__":
