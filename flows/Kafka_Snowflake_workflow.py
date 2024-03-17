@@ -1,10 +1,11 @@
 import os
 import json
+import logging
 import snowflake.connector
 from dotenv import load_dotenv
 from kafka import KafkaConsumer
 from prefect import flow, task
-
+from datetime import datetime
 load_dotenv()
 
 @task
@@ -20,23 +21,13 @@ def connect_to_snowflake():
         )
         return conn
     except Exception as e:
-        print(f"Error connecting to Snowflake: {e}")
-
+        logging.error(f"Error connecting to Snowflake: {e}")
+        raise e
 @task
-def consume_messages_from_kafka():
-    try:
-        consumer = KafkaConsumer(
-            os.getenv("KAFKA_TOPIC"),
-            bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
-            group_id=os.getenv("KAFKA_GROUP_ID"),
-            value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-        )
-        data = []
-        for message in consumer:
-            data.append(message.value)
-        return data
-    except Exception as e:
-        print(f"Error consuming messages from Kafka: {e}")
+def extract_from_payload(json_data):
+    data = json.loads(json_data)
+    after_payload = data["payload"]["after"]
+    return after_payload
 
 @task
 def insert_data_to_snowflake(con, data):
@@ -54,18 +45,32 @@ def insert_data_to_snowflake(con, data):
 
         # Create a cursor from the Snowflake connection
         cursor = con.cursor()
-        cursor.executemany(snowflake_insert_sql, data)
+        cursor.execute(snowflake_insert_sql, data)
         cursor.close()
         con.commit()
     except Exception as e:
         print(f"Error inserting data to Snowflake: {e}")
 
-
-@flow(name="Kafka_Snowflake")
-def snow_main():
+@flow(name="ETL_snowflake")
+def main():
+    consumer = KafkaConsumer(
+        os.getenv("KAFKA_TOPIC"),
+        bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
+        group_id=os.getenv("KAFKA_GROUP_ID"),
+        auto_offset_reset='earliest',
+        value_deserializer=lambda x: x.decode('utf-8')
+    )
     snowflake_conn = connect_to_snowflake()
-    kafka_data = consume_messages_from_kafka()
-    insert_data_to_snowflake(snowflake_conn, kafka_data)
-    
+    for message in consumer:
+        try:
+            payload = extract_from_payload(message.value)
+            insert_data_to_snowflake(snowflake_conn, payload)
+
+            consumer.commit()
+
+        except Exception as e:
+            logging.error(f"Error processing message: {e}")
+
 if __name__ == "__main__":
-    snow_main()
+    logging.basicConfig(level=logging.INFO)
+    main()
