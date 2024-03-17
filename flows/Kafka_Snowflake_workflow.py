@@ -52,7 +52,7 @@ def insert_data_to_snowflake(con, data):
         print(f"Error inserting data to Snowflake: {e}")
 
 @flow(name="ETL_snowflake")
-def main():
+def snow_main():
     consumer = KafkaConsumer(
         os.getenv("KAFKA_TOPIC"),
         bootstrap_servers=os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
@@ -73,4 +73,4 @@ def main():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    main()
+    snow_main()
