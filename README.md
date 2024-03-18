@@ -1,5 +1,6 @@
 # ETL_snowflake
-An extract load and transform pipeline  from postgres to Snowflake using Docker
+Work in progress:
+  ## Api, Postgres, Debezium, Kafka, Docker Google cloud storage, datawarehouse(Snowflake/Bigquery)
 
 
 #To start prefect UI: prefect server start
