@@ -1,69 +1,87 @@
-from confluent_kafka import Consumer, KafkaError
-import snowflake.connector
 import os
 import json
-# Kafka consumer configuration
-bootstrap_servers = 'localhost:9092'
-group_id = 'snowflake-consumer'  # Consumer group ID
-topic = 'postgres.public.emission'  # Kafka topic to consume from
+import logging
+import snowflake.connector
+from dotenv import load_dotenv
+from kafka import KafkaConsumer
+from prefect import flow, task
 
-# Connect to Snowflake
-conn = snowflake.connector.connect(
-    user=os.getenv("snowflake_role"),
-    password=os.getenv("snowflake_password"),
-    account=os.getenv("snowflake_account"),
-    database=os.getenv("snowflake_database"),
-    schema=os.getenv("snowflake_schema")
-)
+load_dotenv()
 
-# Create Kafka consumer instance
-conf = {
-    'bootstrap.servers': bootstrap_servers,
-    'group.id': group_id,
-    'auto.offset.reset': 'earliest'  # Start consuming from the earliest available offset
-}
-consumer = Consumer(conf)
+@task
+def connect_to_snowflake():
+    try:
+        conn = snowflake.connector.connect(
+            user=os.getenv("snowflake_user"),
+            password=os.getenv("snowflake_password"),
+            account=os.getenv("snowflake_account"),
+            warehouse=os.getenv("snowflake_warehouse"),
+            database=os.getenv("snowflake_database"),
+            schema=os.getenv("snowflake_schema")
+        )
+        return conn
+    except Exception as e:
+        logging.error(f"Error connecting to Snowflake: {e}")
+        raise e
 
-# Subscribe to the topic
-consumer.subscribe([topic])
+@task
+def consume_kafka():
+    data = []
+    consumer = KafkaConsumer(
+        "postgres.public.emission",
+        bootstrap_servers="localhost:9092",
+        group_id="snowflake",
+        auto_offset_reset="earliest",
+        value_deserializer=lambda x: json.loads(x.decode('utf-8')))
 
-try:
-    while True:
-        # Poll for messages
-        message = consumer.poll(timeout=1.0)
+    for message in consumer:
+        try:
+            payload = message.value
+            after_payload = payload.get("payload", {}).get("after")
+            if after_payload:
+                data.append(after_payload)
+        except Exception as e:
+            logging.error(f"Error processing message: {e}")
+    return data
 
-        if message is None:
-            continue
-        elif message.error():
-            if message.error().code() == KafkaError._PARTITION_EOF:
-                # End of partition, the consumer reached the end of the topic
-                print(f'[{message.topic()}] Reached end of partition [{message.partition()}]')
-            elif message.error():
-                # Error occurred while consuming message
-                print(f'Error: {message.error()}')
-        else:
-            # Message consumed successfully
-            print(f'Received message: {message.value().decode("utf-8")}')
+@task
+def insert_data_to_snowflake(con, data):
+    try:
+        snowflake_insert_sql = """
+            INSERT INTO emission (
+            Minutes1UTC, Minutes1DK, CO2Emission, ProductionGe100MW,
+            ProductionLt100MW, SolarPower, OffshoreWindPower,
+            OnshoreWindPower, Exchange_Sum, Exchange_DK1_DE,
+            Exchange_DK1_NL, Exchange_DK1_GB, Exchange_DK1_NO,
+            Exchange_DK1_SE, Exchange_DK1_DK2, Exchange_DK2_DE,
+            Exchange_DK2_SE, Exchange_Bornholm_SE
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
 
-            # Prepare data (assuming JSON format for simplicity)
-            data = json.loads(message.value().decode("utf-8"))
+        # Preprocess data to match Snowflake insert format
+        prepared_data = [(item['Minutes1UTC'], item['Minutes1DK'], item['CO2Emission'], 
+                          item['ProductionGe100MW'], item['ProductionLt100MW'], item['SolarPower'], 
+                          item['OffshoreWindPower'], item['OnshoreWindPower'], item['Exchange_Sum'], 
+                          item['Exchange_DK1_DE'], item['Exchange_DK1_NL'], item['Exchange_DK1_GB'], 
+                          item['Exchange_DK1_NO'], item['Exchange_DK1_SE'], item['Exchange_DK1_DK2'], 
+                          item['Exchange_DK2_DE'], item['Exchange_DK2_SE'], item['Exchange_Bornholm_SE']) 
+                         for item in data]
 
-            # Execute SQL statements to insert data into Snowflake
-            cursor = conn.cursor()
-            try:
-                cursor.execute("""
-                    INSERT INTO your_table (column1, column2, ...)
-                    VALUES (?, ?, ...)
-                """, (data['column1'], data['column2'], ...))
+        # Create a cursor from the Snowflake connection
+        cursor = con.cursor()
+        cursor.executemany(snowflake_insert_sql, prepared_data)
+        cursor.close()
+        con.commit()
+    except Exception as e:
+        logging.error(f"Error inserting data to Snowflake: {e}")
 
-                conn.commit()
-                print("Data inserted successfully!")
-            except snowflake.connector.errors.ProgrammingError as e:
-                print(f"Error: {e}")
-            finally:
-                cursor.close()
+@flow(name="ETL_snowflake")
+def main():
+    snowflake_conn = connect_to_snowflake()
+    payload = consume_kafka()
+    logging.info(f"Received {len(payload)} records from Kafka.")
+    insert_data_to_snowflake(snowflake_conn, payload)
 
-except KeyboardInterrupt:
-    # Terminate consumer on keyboard interrupt
-    consumer.close()
-    conn.close()
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    main().run()
