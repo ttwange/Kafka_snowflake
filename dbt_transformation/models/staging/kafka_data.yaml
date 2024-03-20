@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: kafka
+    config-version: 2
+    config:
+      sources:
+        - name: kafka
+          adapter: kafka
+          topics:
+            - name: postgres.public.emission
