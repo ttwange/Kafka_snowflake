@@ -1,7 +1,7 @@
 -- kafka_data_model.sql
 
 {{ config(
-  materialized='table',
+  materialized='view',
   alias='kafka_data'
 ) }}
 
