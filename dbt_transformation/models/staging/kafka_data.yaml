@@ -1,13 +1,16 @@
-config-version: 2
+version: 2
 
 sources:
-  - name: kafka_source  # Rename if needed for clarity
-    config-version: 2
+  - name: kafka
     config:
       sources:
-        - name: kafka
           adapter: kafka
           brokers:
-            - localhost:9092
+            - broker:29092
           topics:
             - name: postgres.public.emission
+            columns:
+              - name: MINUTES1UTC
+                tests:
+                  - unique
+                  - not null
