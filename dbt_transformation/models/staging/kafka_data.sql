@@ -1,8 +1,6 @@
--- kafka_data_model.sql
-
 {{ config(
-  materialized='view',
-  alias='kafka_data'
+    materialized = 'table', 
+    tags = ["source","kafka"]
 ) }}
 
 select
@@ -23,4 +21,5 @@ select
     Exchange_DK2_DE,
     Exchange_DK2_SE,
     Exchange_Bornholm_SE
-from {{ source('kafka', 'postgres.public.emission') }};
+from
+    {{ var('kafka_topic') }}
