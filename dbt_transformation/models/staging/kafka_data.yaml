@@ -1,11 +1,13 @@
-version: 2
+config-version: 2
 
 sources:
-  - name: kafka
+  - name: kafka_source  # Rename if needed for clarity
     config-version: 2
     config:
       sources:
         - name: kafka
           adapter: kafka
+          brokers:
+            - localhost:9092
           topics:
             - name: postgres.public.emission
