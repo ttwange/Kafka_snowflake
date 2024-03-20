@@ -22,7 +22,15 @@ clean-targets:         # directories to be removed by `dbt clean`
   - "target"
   - "dbt_packages"
 
-
+#KAFKA DATA SOURCE 
+sources:
+  - name: kafka
+    config:
+      adapter: kafka
+      brokers:
+        - broker:29092
+      topics:
+        - name: postgres.public.emission
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
 

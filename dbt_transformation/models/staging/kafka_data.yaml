@@ -1,16 +1,19 @@
 version: 2
-
-sources:
-  - name: kafka
-    config:
-      sources:
+models:
+  - name: kafka_data
+    columns:
+      - name: MINUTES1UTC
+    tests:
+      - unique
+      - not_null
+    description: "Model to retrieve data from Kafka"
+    meta:
+      dbt_created_at: "{{ get_timestamp() }}"
+    sources:
+      - name: kafka_source
+        config:
           adapter: kafka
           brokers:
             - broker:29092
           topics:
             - name: postgres.public.emission
-            columns:
-              - name: MINUTES1UTC
-                tests:
-                  - unique
-                  - not null
