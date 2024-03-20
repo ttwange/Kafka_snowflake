@@ -5,4 +5,4 @@ select
     extract(month from Minutes1UTC) as month,
     extract(day from Minutes1UTC) as day,
     extract(hour from Minutes1UTC) as hour
-from {{ ref('stg_energy') }}
+from {{ ref('kafka_data') }}

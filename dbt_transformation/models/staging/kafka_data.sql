@@ -1,3 +1,8 @@
+{{ config(
+    materialized = 'table', 
+    tags = ["source","kafka"]
+) }}
+
 select
     Minutes1UTC,
     CO2Emission,
@@ -16,4 +21,5 @@ select
     Exchange_DK2_DE,
     Exchange_DK2_SE,
     Exchange_Bornholm_SE
-from {{ source('energy','emission')}}
+from
+    {{ var('kafka_topic') }}
