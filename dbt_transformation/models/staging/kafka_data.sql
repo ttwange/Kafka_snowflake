@@ -1,8 +1,3 @@
-{{ config(
-    materialized = 'table', 
-    tags = ["source","kafka"]
-) }}
-
 select
     Minutes1UTC,
     CO2Emission,
