@@ -170,6 +170,7 @@ services:
         - INFLUXDB_ADMIN_PASSWORD=adminpassword
       networks:
         energy:
+        
   chronograf:
       image: chronograf:latest
       container_name: chronograf
