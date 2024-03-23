@@ -5,8 +5,8 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 
 # Kafka consumer configuration
 conf = {
-    'bootstrap.servers': 'localhost:9092',
-    'group.id': 'my_consumer_group',
+    'bootstrap.servers': 'broker:29092',
+    'group.id': 'influx',
     'auto.offset.reset': 'earliest'
 }
 
