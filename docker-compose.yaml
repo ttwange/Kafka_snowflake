@@ -156,32 +156,6 @@ services:
         retries: 5
       networks:
         energy:
-
-  influxdb:
-      image: influxdb:latest
-      container_name: influxdb
-      hostname: influxdb
-      ports:
-        - "8086:8086"
-      environment:
-        - INFLUXDB_DB=mydb
-        - INFLUXDB_ADMIN_ENABLED=true
-        - INFLUXDB_ADMIN_USER=admin
-        - INFLUXDB_ADMIN_PASSWORD=adminpassword
-      networks:
-        energy:
-        
-  chronograf:
-      image: chronograf:latest
-      container_name: chronograf
-      ports:
-        - "8888:8888"
-      environment:
-        - INFLUXDB_URL=http://influxdb:8086
-      depends_on:
-        - influxdb
-      networks:
-        energy:
 networks:
   energy:
     name: energy
